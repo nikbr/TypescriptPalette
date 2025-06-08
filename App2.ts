@@ -30,25 +30,29 @@ type ColorConfig<T extends ColorData> = {
   };
 };
 
+type TInputModelKeys<U extends ColorsUnion, T extends ColorData> = keyof TInputModel<U,T>;
 
 
-type PaletteShape<T extends ColorData, U extends ColorsUnion> = 
-{ // colordata + base tone
-    [COLOR in keyof TInputModel<U,T> ]:ReturnType<ColorConfig<T>['base']> & T
-} & 
-{ //tones 
-    [COLOR in keyof TInputModel<U,T>  as
+
+type BaseCombinations<T extends ColorData, U extends ColorsUnion> = { // colordata + base tone
+    [ColorKey in TInputModelKeys<U,T> ]:ReturnType<ColorConfig<T>['base']> & T
+}
+
+type ToneCombinations<T extends ColorData, U extends ColorsUnion> = {
+  [COLOR in keyof TInputModel<U,T>  as
         (
             {
                 [TONE in keyof ColorConfig<T>['tones']]:`${Extract<COLOR, string>}_${Extract<ColorConfig<T>['tones'][TONE]['subtone']['name'], string>}` 
             }[keyof ColorConfig<T>['tones']]
             
         )
-    ]:
+    ]
+  :
     ReturnType<ColorConfig<T>['tones'][keyof ColorConfig<T>['tones']]>
-     
-}& {//subtones
-    [COLOR in keyof TInputModel<U,T> as
+}
+
+type SubtoneCombinations<T extends ColorData, U extends ColorsUnion> = {
+  [COLOR in keyof TInputModel<U,T> as
       (
         {
           [TONE in keyof ColorConfig<T>['tones']]:  
@@ -57,8 +61,9 @@ type PaletteShape<T extends ColorData, U extends ColorsUnion> =
               )
         }[keyof ColorConfig<T>['tones']]
       )
-    ]:
-      {
+    ]
+  :
+    {
         [TONE in keyof ColorConfig<T>['tones']]:{
               [S in keyof ColorConfig<T>['tones'][TONE]['subtone']['subtone']]:
                 ReturnType<
@@ -68,6 +73,10 @@ type PaletteShape<T extends ColorData, U extends ColorsUnion> =
 
       }[keyof ColorConfig<T>['tones']]
 }
+
+type PaletteShape<T extends ColorData, U extends ColorsUnion> = 
+ BaseCombinations<T, U> & ToneCombinations<T, U> & SubtoneCombinations<T,U>
+
 
 
 export function createTone<T extends ColorData> (dataModifier:ColorDataModifier<T>, subtoneSettings?:Subtone<T>) : ToneCallback<T> | BaseCallback<T>{
@@ -86,7 +95,7 @@ export function createPalette<T extends ColorData, U extends ColorsUnion>(inputM
 
     for (const color in inputModel){
         result[color]={...inputModel[color],...config.base(input[color] as T)} 
-
+/*
         for(const toneKey in config.tones){
             const toneCallback = config.tones[toneKey];
             const subtoneName = toneCallback.subtone.name;
@@ -97,7 +106,7 @@ export function createPalette<T extends ColorData, U extends ColorsUnion>(inputM
                 result[`${color}_${sub}_${subtoneName}`] = subCallback(input[color] as T);
             }
 
-        }
+        }*/
     }
 
     return result
