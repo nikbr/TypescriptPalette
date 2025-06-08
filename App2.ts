@@ -94,7 +94,8 @@ export function createPalette<T extends ColorData, U extends ColorsUnion>(inputM
     const result = {} as PaletteShape<T, U>;
 
     for (const color in inputModel){
-        result[color]={...inputModel[color],...config.base(input[color] as T)} 
+        result[color]={...inputModel[color],...config.base(input[color] as T)} //Тут ошибка из за возможного пересечения ключей
+
 /*
         for(const toneKey in config.tones){
             const toneCallback = config.tones[toneKey];
